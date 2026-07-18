@@ -106,6 +106,8 @@ Start both the backend and frontend simultaneously with our built-in launch scri
 - **Cloud Storage:** Implement the `ImageStorage` protocol (in `backend/storage/local_storage.py`) to swap from local storage to S3 or R2 buckets seamlessly.
 - **Authentication:** The app currently uses anonymous signed sessions. You can easily integrate NextAuth (Auth.js) and update FastAPI to decode JWT payloads for complete user authentication.
 
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
