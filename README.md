@@ -117,7 +117,7 @@ Since web servers cannot access the client's `127.0.0.1` address directly due to
 
 ---
 
-### macOS Setup (Draw Things)
+### MacOS Setup (Draw Things)
 1. Select **Local (Free)** in the Selected Model dial.
 2. If Draw Things is not installed, click **Download Draw Things** in the modal. Aperture will automatically run commands to install Draw Things via Homebrew Cask:
    ```bash
