@@ -13,6 +13,9 @@
   [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
   [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python)](https://python.org)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+  [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-222?style=flat-square&logo=github)](https://satiricalguru.github.io/Aperture)
+
+  ### 🌐 [**View Live Demo →**](https://satiricalguru.github.io/Aperture)
 </div>
 
 ---
