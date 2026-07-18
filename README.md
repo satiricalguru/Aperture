@@ -26,6 +26,14 @@
 
 ---
 
+## 📸 Screenshots
+
+*Screenshots showcasing the monochrome darkroom UI, contact sheets, and model configurations will go here.*
+
+<!-- Add screenshots here: <img src="path/to/screenshot.png" width="100%" /> -->
+
+---
+
 ## 🛠 Technical Stack
 
 ### Frontend
