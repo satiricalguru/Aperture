@@ -1,0 +1,49 @@
+# Dependency directories
+node_modules/
+frontend/node_modules/
+backend/.venv/
+.venv/
+env/
+venv/
+ENV/
+
+# Next.js build output
+frontend/.next/
+frontend/out/
+
+# Python cache and build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+backend/__pycache__/
+backend/providers/__pycache__/
+backend/routers/__pycache__/
+
+# Database files
+aperture.db
+*.db
+*.sqlite3
+
+# Environment variables (secret)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# User specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Application generated storage
+storage/generations/*
+!storage/generations/.gitkeep
+backend/storage/generations/*
+!backend/storage/generations/.gitkeep
