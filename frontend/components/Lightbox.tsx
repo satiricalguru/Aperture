@@ -213,7 +213,13 @@ export default function Lightbox({
           <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-[10px] text-silver border-t md:border-t-0 md:border-l border-slate pt-2 md:pt-0 md:pl-6 shrink-0 min-w-[200px]">
             <div>
               <span className="text-slate-500">MODEL</span>
-              <p className="text-ink uppercase">{activeGen.model_id.replace("black-forest-labs/", "")}</p>
+              <p className="text-ink uppercase">
+                {activeGen.model_id === "local-drawthings"
+                  ? "Draw Things · Local"
+                  : activeGen.model_id === "local-comfyui"
+                  ? "ComfyUI · Local"
+                  : activeGen.model_id.replace("black-forest-labs/", "")}
+              </p>
             </div>
             <div>
               <span className="text-slate-500">ASPECT</span>

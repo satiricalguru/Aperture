@@ -106,6 +106,39 @@ Start both the backend and frontend simultaneously with our built-in launch scri
    ```
 </details>
 
+## 💻 Local Generation Mode (Zero-API-Key)
+
+Aperture supports a fully local, zero-cost, and private generation mode that runs on your machine's own GPU using local companion applications: **Draw Things** on macOS and **ComfyUI** on Windows. 
+
+### How it works
+Since web servers cannot access the client's `127.0.0.1` address directly due to networking sandboxes, Aperture routes local generations entirely in the user's browser:
+1. The browser sends the prompt and configurations directly to the companion app's local API port.
+2. The generated image bytes are then sent back to the Aperture backend `/generations/import` route to save to the database and render on the contact sheet.
+
+---
+
+### macOS Setup (Draw Things)
+1. Select **Local (Free)** in the Selected Model dial.
+2. If Draw Things is not installed, click **Download Draw Things** in the modal. Aperture will automatically run commands to install Draw Things via Homebrew Cask:
+   ```bash
+   brew install --cask draw-things
+   ```
+3. Open the **Draw Things** application.
+4. Enable the local API server: Go to **Settings** → scroll to **Advanced** → enable **"API Server"** (runs HTTP API on `http://127.0.0.1:7860`).
+5. Click **Check again** or **Launch Draw Things** in Aperture to connect.
+
+---
+
+### Windows Setup (ComfyUI)
+1. Select **Local (Free)** in the Selected Model dial.
+2. If ComfyUI is not installed, click **Download ComfyUI**. Aperture will automatically clone the repository into `local_engines/comfyui` in your project folder:
+   ```bash
+   git clone https://github.com/comfyanonymous/ComfyUI.git local_engines/comfyui
+   ```
+3. Open ComfyUI and run the server (starts on `http://127.0.0.1:8188` by default).
+4. Ensure you have downloaded at least one checkpoint model (e.g. SDXL, SD 1.5, or Flux) and placed it in the `models/checkpoints/` directory.
+5. Click **Check again** in Aperture to connect.
+
 ---
 
 ## 🏗 Architecture & Scaling

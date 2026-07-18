@@ -12,11 +12,18 @@ interface FrameProps {
 }
 
 export default function Frame({ generation, onClick, onDelete, isNew = false }: FrameProps) {
-  const modelName = generation.model_id
-    .replace("black-forest-labs/", "")
-    .replace("-image-generation", "")
-    .replace("-image", "")
-    .toUpperCase();
+  let modelName = generation.model_id;
+  if (modelName === "local-drawthings") {
+    modelName = "Draw Things · Local";
+  } else if (modelName === "local-comfyui") {
+    modelName = "ComfyUI · Local";
+  } else {
+    modelName = modelName
+      .replace("black-forest-labs/", "")
+      .replace("-image-generation", "")
+      .replace("-image", "")
+      .toUpperCase();
+  }
 
   const formattedFrame = String(generation.frame_number).padStart(3, "0");
   

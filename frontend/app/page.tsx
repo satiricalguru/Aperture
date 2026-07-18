@@ -10,7 +10,9 @@ import {
   fetchHistory,
   generateImages,
   deleteGeneration,
+  importLocalGeneration,
 } from "../lib/api";
+import { generateLocalImage } from "../lib/localProvider";
 
 export default function Home() {
   const [generations, setGenerations] = useState<Generation[]>([]);
@@ -251,16 +253,50 @@ export default function Home() {
     setIsGenerating(true);
     setErrorMsg(null);
     try {
-      const newGens = await generateImages(req);
-      
-      setGenerations((prev) => [...newGens, ...prev]);
-      
-      const newIds = new Set(newGens.map((g) => g.id));
-      setNewGenerationIds(newIds);
-      
-      setTimeout(() => {
-        setNewGenerationIds(new Set());
-      }, 1200);
+      if (req.model === "local-drawthings" || req.model === "local-comfyui") {
+        const os = req.model === "local-drawthings" ? "mac" : "windows";
+        const sizeMap: Record<string, { width: number; height: number }> = {
+          "1:1": { width: 1024, height: 1024 },
+          "16:9": { width: 1024, height: 576 },
+          "9:16": { width: 576, height: 1024 },
+          "4:5": { width: 832, height: 1040 },
+        };
+        const { width, height } = sizeMap[req.aspect_ratio] || { width: 1024, height: 1024 };
+
+        const { blob, seed } = await generateLocalImage(os, {
+          prompt: req.prompt,
+          width,
+          height,
+        });
+
+        const newGen = await importLocalGeneration({
+          blob,
+          prompt: req.prompt,
+          model_id: req.model,
+          aspect_ratio: req.aspect_ratio,
+          seed,
+        });
+
+        setGenerations((prev) => [newGen, ...prev]);
+
+        const newIds = new Set([newGen.id]);
+        setNewGenerationIds(newIds);
+
+        setTimeout(() => {
+          setNewGenerationIds(new Set());
+        }, 1200);
+      } else {
+        const newGens = await generateImages(req);
+        
+        setGenerations((prev) => [...newGens, ...prev]);
+        
+        const newIds = new Set(newGens.map((g) => g.id));
+        setNewGenerationIds(newIds);
+        
+        setTimeout(() => {
+          setNewGenerationIds(new Set());
+        }, 1200);
+      }
     } catch (err) {
       const error = err instanceof Error ? err : new Error("An unexpected error occurred during exposure.");
       console.error(error);

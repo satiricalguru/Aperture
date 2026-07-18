@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import ParamDial from "./ParamDial";
 import { GenerateRequest } from "../lib/api";
+import { detectOS, pingLocalEngine, LocalOS } from "../lib/localProvider";
+import LocalSetupModal from "./LocalSetupModal";
 
 interface ComposerProps {
   onGenerate: (req: GenerateRequest) => Promise<void>;
@@ -13,12 +15,49 @@ export default function Composer({ onGenerate, isGenerating }: ComposerProps) {
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [count, setCount] = useState(1);
 
+  const [showLocalModal, setShowLocalModal] = useState(false);
+  const [localModalOS, setLocalModalOS] = useState<LocalOS>("unsupported");
+
+  const handleModelChange = async (value: string) => {
+    if (value !== "local") {
+      setModel(value);
+      return;
+    }
+    const os = detectOS();
+    if (os === "unsupported") {
+      setLocalModalOS(os);
+      setShowLocalModal(true);
+      return;
+    }
+
+    const hasConfirmed = localStorage.getItem("aperture-local-confirmed") === "true";
+    if (hasConfirmed) {
+      const alreadyRunning = await pingLocalEngine(os);
+      if (alreadyRunning) {
+        setModel(os === "mac" ? "local-drawthings" : "local-comfyui");
+        return;
+      }
+    }
+
+    setLocalModalOS(os);
+    setShowLocalModal(true);
+  };
+
+  const handleLocalConnected = () => {
+    const os = detectOS();
+    if (os !== "unsupported") {
+      localStorage.setItem("aperture-local-confirmed", "true");
+      setModel(os === "mac" ? "local-drawthings" : "local-comfyui");
+    }
+  };
+
   const modelOptions = [
-    { label: "Flux Free", value: "free-pollinations" },
-    { label: "SDXL Free", value: "free-sdxl" },
-    { label: "GPT Image", value: "gpt-image-2" },
-    { label: "Gemini Image", value: "gemini-2.5-flash-image" },
-    { label: "Flux Schnell", value: "flux-schnell" },
+    { label: "Flux (Free)", value: "free-pollinations" },
+    { label: "SDXL (Free)", value: "free-sdxl" },
+    { label: "GPT", value: "gpt-image-2" },
+    { label: "Gemini", value: "gemini-2.5-flash-image" },
+    { label: "Schnell", value: "flux-schnell" },
+    { label: "Local (Free)", value: "local" },
   ];
 
   const aspectOptions = [
@@ -71,8 +110,8 @@ export default function Composer({ onGenerate, isGenerating }: ComposerProps) {
           <ParamDial
             label="Selected Model"
             options={modelOptions}
-            value={model}
-            onChange={setModel}
+            value={model.startsWith("local-") ? "local" : model}
+            onChange={handleModelChange}
           />
           <ParamDial
             label="Aspect Ratio"
@@ -101,6 +140,13 @@ export default function Composer({ onGenerate, isGenerating }: ComposerProps) {
           {isGenerating ? "Developing..." : "Expose Frame"}
         </button>
       </div>
+      {showLocalModal && (
+        <LocalSetupModal
+          os={localModalOS}
+          onClose={() => setShowLocalModal(false)}
+          onConnected={handleLocalConnected}
+        />
+      )}
     </form>
   );
 }

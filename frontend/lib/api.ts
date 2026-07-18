@@ -77,3 +77,64 @@ export async function deleteGeneration(id: string): Promise<void> {
     throw new Error(`Failed to delete generation: ${response.statusText}`);
   }
 }
+
+export async function importLocalGeneration(params: {
+  blob: Blob;
+  prompt: string;
+  model_id: string;
+  aspect_ratio: string;
+  seed: number | null;
+}): Promise<Generation> {
+  const form = new FormData();
+  form.append("file", params.blob, "generation.png");
+  form.append("prompt", params.prompt);
+  form.append("model_id", params.model_id);
+  form.append("aspect_ratio", params.aspect_ratio);
+  if (params.seed !== null) form.append("seed", String(params.seed));
+
+  const response = await fetch(`${API_BASE_URL}/generations/import`, {
+    method: "POST",
+    body: form,
+    credentials: "include",
+  });
+  if (!response.ok) throw new Error(`Failed to import local generation: ${response.statusText}`);
+  return response.json();
+}
+
+export async function installLocalEngine(modelId: string): Promise<{ status: string; message: string }> {
+  const form = new FormData();
+  form.append("model_id", modelId);
+  const response = await fetch(`${API_BASE_URL}/engines/install`, {
+    method: "POST",
+    body: form,
+  });
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData.detail || `Failed to install engine: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function launchLocalEngine(modelId: string): Promise<{ status: string; message: string }> {
+  const form = new FormData();
+  form.append("model_id", modelId);
+  const response = await fetch(`${API_BASE_URL}/engines/launch`, {
+    method: "POST",
+    body: form,
+  });
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData.detail || `Failed to launch engine: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function checkEnginesStatus(): Promise<Record<string, { installed: boolean }>> {
+  const response = await fetch(`${API_BASE_URL}/engines/status`, {
+    method: "GET",
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to check engines status: ${response.statusText}`);
+  }
+  return response.json();
+}
