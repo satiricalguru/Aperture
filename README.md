@@ -12,6 +12,7 @@
   [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
   [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
   [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python)](https://python.org)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 </div>
 
 ---
@@ -104,6 +105,10 @@ Start both the backend and frontend simultaneously with our built-in launch scri
 - **Database Swaps:** Update `DATABASE_URL` in `.env` to a Postgres connection string. SQLAlchemy's pooling handles the rest automatically.
 - **Cloud Storage:** Implement the `ImageStorage` protocol (in `backend/storage/local_storage.py`) to swap from local storage to S3 or R2 buckets seamlessly.
 - **Authentication:** The app currently uses anonymous signed sessions. You can easily integrate NextAuth (Auth.js) and update FastAPI to decode JWT payloads for complete user authentication.
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 <br />
 
