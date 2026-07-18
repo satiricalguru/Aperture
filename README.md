@@ -1,8 +1,5 @@
 <div align="center">
-  <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 100 100">
-    <circle cx="50" cy="50" r="48" fill="#000000" />
-    <polygon points="50,28 72,70 28,70" fill="#ffffff" stroke="#ffffff" stroke-width="8" stroke-linejoin="round" />
-  </svg>
+  <img src="logo.svg" width="96" height="96" alt="Aperture Logo" />
 
   # Aperture
   **AI Image Generation Studio**
