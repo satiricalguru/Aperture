@@ -89,6 +89,7 @@ export default function Home() {
   // Sync Next.js DevTools
 
   const isSyncingRef = React.useRef(false);
+  const isMutatingRef = React.useRef(false);
 
   useEffect(() => {
     if (!mounted) return;
@@ -98,91 +99,102 @@ export default function Home() {
 
     const syncWithPortal = (portal: Element) => {
       const updateFromPortal = () => {
-        const shadowRoot = portal.shadowRoot;
-        if (!shadowRoot) return;
+        if (isMutatingRef.current) return;
+        isMutatingRef.current = true;
 
-        // 1. Sync the DevTools select element -> next-themes
-        const selects = shadowRoot.querySelectorAll("select");
-        let themeSelect: HTMLSelectElement | null = null;
-        
-        selects.forEach((sel) => {
-          const options = Array.from(sel.options).map((o) => o.value.toLowerCase());
-          if (options.includes("dark") && options.includes("light")) {
-            themeSelect = sel;
-            if (!sel.hasAttribute("data-theme-listener")) {
-              sel.setAttribute("data-theme-listener", "true");
-              const handleSelectChange = () => {
-                if (isSyncingRef.current) return;
-                const val = sel.value.toLowerCase();
-                if (val === "dark" || val === "light" || val === "system") {
-                  setTheme(val);
-                }
-              };
-              sel.addEventListener("change", handleSelectChange);
-              sel.addEventListener("input", handleSelectChange);
-            }
-          }
-        });
+        try {
+          const shadowRoot = portal.shadowRoot;
+          if (!shadowRoot) return;
 
-        // 2. Sync next-themes -> DevTools select element
-        if (themeSelect) {
-          const selectEl = themeSelect as HTMLSelectElement;
-          const matchingOpt = Array.from(selectEl.options).find((o) => o.value.toLowerCase() === theme);
-          if (matchingOpt && selectEl.value !== matchingOpt.value) {
-            isSyncingRef.current = true;
-            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value")?.set;
-            if (nativeInputValueSetter) {
-              nativeInputValueSetter.call(selectEl, matchingOpt.value);
-              selectEl.dispatchEvent(new Event("change", { bubbles: true }));
-            } else {
-              selectEl.value = matchingOpt.value;
-              selectEl.dispatchEvent(new Event("change", { bubbles: true }));
-            }
-            isSyncingRef.current = false;
-          }
-        }
-
-        // 3. Inject custom "Connect Models" menu item inside Next.js DevTools portal shadow DOM
-        const preferencesRow = shadowRoot.querySelector("[data-preferences]");
-        if (preferencesRow && preferencesRow.parentElement) {
-          const menuContainer = preferencesRow.parentElement;
+          // 1. Sync the DevTools select element -> next-themes
+          const selects = shadowRoot.querySelectorAll("select");
+          let themeSelect: HTMLSelectElement | null = null;
           
-          if (!menuContainer.querySelector("[data-custom-connect]")) {
-            const connectRow = preferencesRow.cloneNode(true) as HTMLElement;
-            connectRow.setAttribute("data-custom-connect", "true");
-            connectRow.removeAttribute("data-preferences");
-            
-            const walk = document.createTreeWalker(connectRow, NodeFilter.SHOW_TEXT, null);
-            let textNode;
-            while ((textNode = walk.nextNode())) {
-              if (textNode.nodeValue && textNode.nodeValue.includes("Preferences")) {
-                textNode.nodeValue = "Connect Models";
-                break;
+          selects.forEach((sel) => {
+            const options = Array.from(sel.options).map((o) => o.value.toLowerCase());
+            if (options.includes("dark") && options.includes("light")) {
+              themeSelect = sel;
+              if (!sel.hasAttribute("data-theme-listener")) {
+                sel.setAttribute("data-theme-listener", "true");
+                const handleSelectChange = () => {
+                  if (isSyncingRef.current) return;
+                  const val = sel.value.toLowerCase();
+                  if (val === "dark" || val === "light" || val === "system") {
+                    setTheme(val);
+                  }
+                };
+                sel.addEventListener("change", handleSelectChange);
+                sel.addEventListener("input", handleSelectChange);
               }
             }
-            
-            const svgEl = connectRow.querySelector("svg");
-            if (svgEl) {
-              svgEl.outerHTML = `
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="key-icon" style="opacity: 0.8;">
-                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
-                </svg>
-              `;
+          });
+
+          // 2. Sync next-themes -> DevTools select element
+          if (themeSelect) {
+            const selectEl = themeSelect as HTMLSelectElement;
+            const matchingOpt = Array.from(selectEl.options).find((o) => o.value.toLowerCase() === theme);
+            if (matchingOpt && selectEl.value !== matchingOpt.value) {
+              isSyncingRef.current = true;
+              const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value")?.set;
+              if (nativeInputValueSetter) {
+                nativeInputValueSetter.call(selectEl, matchingOpt.value);
+                selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+              } else {
+                selectEl.value = matchingOpt.value;
+                selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+              }
+              isSyncingRef.current = false;
             }
-            
-            connectRow.addEventListener("click", (e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setIsSettingsOpen(true);
-            });
-            
-            menuContainer.insertBefore(connectRow, preferencesRow);
           }
+
+          // 3. Inject custom "Connect Models" menu item inside Next.js DevTools portal shadow DOM
+          const preferencesRow = shadowRoot.querySelector("[data-preferences]");
+          if (preferencesRow && preferencesRow.parentElement) {
+            const menuContainer = preferencesRow.parentElement;
+            
+            if (!menuContainer.querySelector("[data-custom-connect]")) {
+              const connectRow = preferencesRow.cloneNode(true) as HTMLElement;
+              connectRow.setAttribute("data-custom-connect", "true");
+              connectRow.removeAttribute("data-preferences");
+              
+              const walk = document.createTreeWalker(connectRow, NodeFilter.SHOW_TEXT, null);
+              let textNode;
+              while ((textNode = walk.nextNode())) {
+                if (textNode.nodeValue && textNode.nodeValue.includes("Preferences")) {
+                  textNode.nodeValue = "Connect Models";
+                  break;
+                }
+              }
+              
+              const svgEl = connectRow.querySelector("svg");
+              if (svgEl) {
+                svgEl.outerHTML = `
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="key-icon" style="opacity: 0.8;">
+                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                  </svg>
+                `;
+              }
+              
+              connectRow.addEventListener("click", (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setIsSettingsOpen(true);
+              });
+              
+              menuContainer.insertBefore(connectRow, preferencesRow);
+            }
+          }
+        } finally {
+          queueMicrotask(() => {
+            isMutatingRef.current = false;
+          });
         }
       };
 
       portalObserver = new MutationObserver(() => {
-        updateFromPortal();
+        if (!isMutatingRef.current) {
+          updateFromPortal();
+        }
       });
       
       portalObserver.observe(portal, {
