@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import Composer from "../components/Composer";
 import ContactSheet from "../components/ContactSheet";
 import Lightbox from "../components/Lightbox";
@@ -20,7 +21,7 @@ export default function Home() {
   const [newGenerationIds, setNewGenerationIds] = useState<Set<string>>(new Set());
   const [activeGen, setActiveGen] = useState<Generation | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [openaiKey, setOpenaiKey] = useState<string>(() => {
@@ -85,179 +86,13 @@ export default function Home() {
     setIsSettingsOpen(false);
   };
 
-  const syncDevToolsDropdown = (t: "dark" | "light") => {
-    const portal = document.querySelector("nextjs-portal");
-    if (portal && portal.shadowRoot) {
-      const selects = portal.shadowRoot.querySelectorAll("select");
-      selects.forEach((sel) => {
-        const options = Array.from(sel.options).map((o) => o.value.toLowerCase());
-        if (options.includes("dark") && options.includes("light")) {
-          const matchingOpt = Array.from(sel.options).find((o) => o.value.toLowerCase() === t);
-          if (matchingOpt && sel.value !== matchingOpt.value) {
-            sel.value = matchingOpt.value;
-          }
-        }
-      });
-    }
-  };
-
-  const applyTheme = (t: "dark" | "light") => {
-    setTheme(t);
-    localStorage.setItem("aperture-theme", t);
-    document.documentElement.classList.add(t);
-    document.documentElement.classList.remove(t === "dark" ? "light" : "dark");
-    document.documentElement.setAttribute("data-theme", t);
-    syncDevToolsDropdown(t);
-  };
-
-  // Sync theme on mount and load user preference
+  // Sync mounted state
   useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem("aperture-theme") as "dark" | "light" | null;
-    let initialTheme: "dark" | "light" = "dark";
-    if (savedTheme === "dark" || savedTheme === "light") {
-      initialTheme = savedTheme;
-    } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
-      initialTheme = "light";
-    }
-    applyTheme(initialTheme);
-
-    let portalObserver: MutationObserver | null = null;
-    let bodyObserver: MutationObserver | null = null;
-
-    const syncWithPortal = (portal: Element) => {
-      const updateFromPortal = () => {
-        const shadowRoot = portal.shadowRoot;
-        if (shadowRoot) {
-          // 1. Listen for changes on select elements inside DevTools shadow DOM (e.g. Theme dropdown)
-          const selects = shadowRoot.querySelectorAll("select");
-          selects.forEach((sel) => {
-            if (!sel.hasAttribute("data-theme-listener")) {
-              sel.setAttribute("data-theme-listener", "true");
-              const handleSelectChange = () => {
-                const val = sel.value.toLowerCase();
-                if (val === "dark" || val === "light") {
-                  applyTheme(val);
-                } else if (val === "system") {
-                  const sys = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-                  applyTheme(sys);
-                }
-              };
-              sel.addEventListener("change", handleSelectChange);
-              sel.addEventListener("input", handleSelectChange);
-            }
-          });
-
-          // 2. Also listen for click events on custom dropdown options or theme buttons inside shadow DOM
-          const themeButtons = shadowRoot.querySelectorAll("[data-theme-option], [role='option'], button");
-          themeButtons.forEach((btn) => {
-            if (!btn.hasAttribute("data-theme-listener")) {
-              btn.setAttribute("data-theme-listener", "true");
-              btn.addEventListener("click", () => {
-                const txt = (btn.textContent || "").toLowerCase();
-                if (txt.includes("dark")) {
-                  applyTheme("dark");
-                } else if (txt.includes("light")) {
-                  applyTheme("light");
-                }
-              });
-            }
-          });
-
-          // 3. Inject custom "Connect Models" menu item inside Next.js DevTools portal shadow DOM
-          const preferencesRow = shadowRoot.querySelector("[data-preferences]");
-          if (preferencesRow && preferencesRow.parentElement) {
-            const menuContainer = preferencesRow.parentElement;
-            
-            if (!menuContainer.querySelector("[data-custom-connect]")) {
-              const connectRow = preferencesRow.cloneNode(true) as HTMLElement;
-              connectRow.setAttribute("data-custom-connect", "true");
-              connectRow.removeAttribute("data-preferences");
-              
-              // Walk text nodes and replace "Preferences" with "Connect Models"
-              const walk = document.createTreeWalker(connectRow, NodeFilter.SHOW_TEXT, null);
-              let textNode;
-              while ((textNode = walk.nextNode())) {
-                if (textNode.nodeValue && textNode.nodeValue.includes("Preferences")) {
-                  textNode.nodeValue = "Connect Models";
-                  break;
-                }
-              }
-              
-              // Replace SVG gear icon with key icon
-              const svgEl = connectRow.querySelector("svg");
-              if (svgEl) {
-                svgEl.outerHTML = `
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="key-icon" style="opacity: 0.8;">
-                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
-                  </svg>
-                `;
-              }
-              
-              // Add custom click event to trigger the React modal
-              connectRow.addEventListener("click", (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setIsSettingsOpen(true);
-              });
-              
-              menuContainer.insertBefore(connectRow, preferencesRow);
-            }
-          }
-        }
-      };
-
-      // Watch for class/attribute changes on the portal
-      portalObserver = new MutationObserver(() => {
-        updateFromPortal();
-      });
-      
-      portalObserver.observe(portal, {
-        attributes: true,
-        attributeFilter: ["class", "data-theme"],
-      });
-
-      // Also watch its shadow DOM if it is open
-      const shadowRoot = portal.shadowRoot;
-      if (shadowRoot) {
-        portalObserver.observe(shadowRoot, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-        });
-      }
-      
-      // Run initial check
-      updateFromPortal();
-    };
-
-    // Find the Next.js portal element or watch for it
-    const portal = document.querySelector("nextjs-portal");
-    if (portal) {
-      syncWithPortal(portal);
-    } else {
-      bodyObserver = new MutationObserver((_, obs) => {
-        const foundPortal = document.querySelector("nextjs-portal");
-        if (foundPortal) {
-          syncWithPortal(foundPortal);
-          obs.disconnect();
-        }
-      });
-      bodyObserver.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-    }
-
-    return () => {
-      if (portalObserver) portalObserver.disconnect();
-      if (bodyObserver) bodyObserver.disconnect();
-    };
   }, []);
 
   const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    applyTheme(nextTheme);
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   // Load history on mount

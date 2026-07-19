@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { fraunces, ibmPlexSans, ibmPlexMono } from "../fonts";
+import { ThemeProvider } from "../components/ThemeProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,10 +17,13 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${fraunces.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans bg-void text-ink relative z-0">
-        <div className="bg-galaxy"></div>
-        {children}
+        <ThemeProvider attribute="class" defaultTheme="dark">
+          <div className="bg-galaxy"></div>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
