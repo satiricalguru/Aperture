@@ -85,12 +85,29 @@ export default function Home() {
     setIsSettingsOpen(false);
   };
 
+  const syncDevToolsDropdown = (t: "dark" | "light") => {
+    const portal = document.querySelector("nextjs-portal");
+    if (portal && portal.shadowRoot) {
+      const selects = portal.shadowRoot.querySelectorAll("select");
+      selects.forEach((sel) => {
+        const options = Array.from(sel.options).map((o) => o.value.toLowerCase());
+        if (options.includes("dark") && options.includes("light")) {
+          const matchingOpt = Array.from(sel.options).find((o) => o.value.toLowerCase() === t);
+          if (matchingOpt && sel.value !== matchingOpt.value) {
+            sel.value = matchingOpt.value;
+          }
+        }
+      });
+    }
+  };
+
   const applyTheme = (t: "dark" | "light") => {
     setTheme(t);
     localStorage.setItem("aperture-theme", t);
     document.documentElement.classList.add(t);
     document.documentElement.classList.remove(t === "dark" ? "light" : "dark");
     document.documentElement.setAttribute("data-theme", t);
+    syncDevToolsDropdown(t);
   };
 
   // Sync theme on mount and load user preference
