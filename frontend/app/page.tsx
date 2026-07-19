@@ -110,9 +110,44 @@ export default function Home() {
 
     const syncWithPortal = (portal: Element) => {
       const updateFromPortal = () => {
-        // Inject custom "Connect Models" menu item inside Next.js DevTools portal shadow DOM
         const shadowRoot = portal.shadowRoot;
         if (shadowRoot) {
+          // 1. Listen for changes on select elements inside DevTools shadow DOM (e.g. Theme dropdown)
+          const selects = shadowRoot.querySelectorAll("select");
+          selects.forEach((sel) => {
+            if (!sel.hasAttribute("data-theme-listener")) {
+              sel.setAttribute("data-theme-listener", "true");
+              const handleSelectChange = () => {
+                const val = sel.value.toLowerCase();
+                if (val === "dark" || val === "light") {
+                  applyTheme(val);
+                } else if (val === "system") {
+                  const sys = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+                  applyTheme(sys);
+                }
+              };
+              sel.addEventListener("change", handleSelectChange);
+              sel.addEventListener("input", handleSelectChange);
+            }
+          });
+
+          // 2. Also listen for click events on custom dropdown options or theme buttons inside shadow DOM
+          const themeButtons = shadowRoot.querySelectorAll("[data-theme-option], [role='option'], button");
+          themeButtons.forEach((btn) => {
+            if (!btn.hasAttribute("data-theme-listener")) {
+              btn.setAttribute("data-theme-listener", "true");
+              btn.addEventListener("click", () => {
+                const txt = (btn.textContent || "").toLowerCase();
+                if (txt.includes("dark")) {
+                  applyTheme("dark");
+                } else if (txt.includes("light")) {
+                  applyTheme("light");
+                }
+              });
+            }
+          });
+
+          // 3. Inject custom "Connect Models" menu item inside Next.js DevTools portal shadow DOM
           const preferencesRow = shadowRoot.querySelector("[data-preferences]");
           if (preferencesRow && preferencesRow.parentElement) {
             const menuContainer = preferencesRow.parentElement;
