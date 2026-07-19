@@ -86,10 +86,134 @@ export default function Home() {
     setIsSettingsOpen(false);
   };
 
-  // Sync mounted state
+  // Sync mounted state and Next.js DevTools
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    let portalObserver: MutationObserver | null = null;
+    let bodyObserver: MutationObserver | null = null;
+
+    const syncWithPortal = (portal: Element) => {
+      const updateFromPortal = () => {
+        const shadowRoot = portal.shadowRoot;
+        if (!shadowRoot) return;
+
+        // 1. Sync the DevTools select element -> next-themes
+        const selects = shadowRoot.querySelectorAll("select");
+        let themeSelect: HTMLSelectElement | null = null;
+        
+        selects.forEach((sel) => {
+          const options = Array.from(sel.options).map((o) => o.value.toLowerCase());
+          if (options.includes("dark") && options.includes("light")) {
+            themeSelect = sel;
+            if (!sel.hasAttribute("data-theme-listener")) {
+              sel.setAttribute("data-theme-listener", "true");
+              const handleSelectChange = () => {
+                const val = sel.value.toLowerCase();
+                if (val === "dark" || val === "light" || val === "system") {
+                  setTheme(val);
+                }
+              };
+              sel.addEventListener("change", handleSelectChange);
+              sel.addEventListener("input", handleSelectChange);
+            }
+          }
+        });
+
+        // 2. Sync next-themes -> DevTools select element
+        if (themeSelect) {
+          const matchingOpt = Array.from((themeSelect as HTMLSelectElement).options).find((o) => o.value.toLowerCase() === theme);
+          if (matchingOpt && (themeSelect as HTMLSelectElement).value !== matchingOpt.value) {
+            (themeSelect as HTMLSelectElement).value = matchingOpt.value;
+          }
+        }
+
+        // 3. Inject custom "Connect Models" menu item inside Next.js DevTools portal shadow DOM
+        const preferencesRow = shadowRoot.querySelector("[data-preferences]");
+        if (preferencesRow && preferencesRow.parentElement) {
+          const menuContainer = preferencesRow.parentElement;
+          
+          if (!menuContainer.querySelector("[data-custom-connect]")) {
+            const connectRow = preferencesRow.cloneNode(true) as HTMLElement;
+            connectRow.setAttribute("data-custom-connect", "true");
+            connectRow.removeAttribute("data-preferences");
+            
+            const walk = document.createTreeWalker(connectRow, NodeFilter.SHOW_TEXT, null);
+            let textNode;
+            while ((textNode = walk.nextNode())) {
+              if (textNode.nodeValue && textNode.nodeValue.includes("Preferences")) {
+                textNode.nodeValue = "Connect Models";
+                break;
+              }
+            }
+            
+            const svgEl = connectRow.querySelector("svg");
+            if (svgEl) {
+              svgEl.outerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="key-icon" style="opacity: 0.8;">
+                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                </svg>
+              `;
+            }
+            
+            connectRow.addEventListener("click", (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setIsSettingsOpen(true);
+            });
+            
+            menuContainer.insertBefore(connectRow, preferencesRow);
+          }
+        }
+      };
+
+      portalObserver = new MutationObserver(() => {
+        updateFromPortal();
+      });
+      
+      portalObserver.observe(portal, {
+        attributes: true,
+        attributeFilter: ["class", "data-theme"],
+      });
+
+      const shadowRoot = portal.shadowRoot;
+      if (shadowRoot) {
+        portalObserver.observe(shadowRoot, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+        });
+      }
+      
+      updateFromPortal();
+    };
+
+    const portal = document.querySelector("nextjs-portal");
+    if (portal) {
+      syncWithPortal(portal);
+    } else {
+      bodyObserver = new MutationObserver((_, obs) => {
+        const foundPortal = document.querySelector("nextjs-portal");
+        if (foundPortal) {
+          syncWithPortal(foundPortal);
+          obs.disconnect();
+        }
+      });
+      bodyObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    return () => {
+      if (portalObserver) portalObserver.disconnect();
+      if (bodyObserver) bodyObserver.disconnect();
+    };
+  }, [mounted, theme, setTheme]);
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
