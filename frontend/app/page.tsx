@@ -106,6 +106,17 @@ export default function Home() {
           const shadowRoot = portal.shadowRoot;
           if (!shadowRoot) return;
 
+          // 0. Force theme attribute & class on portal and shadow container
+          portal.setAttribute("data-theme", theme || "dark");
+          portal.classList.add(theme || "dark");
+          portal.classList.remove(theme === "dark" ? "light" : "dark");
+
+          if (shadowRoot.firstElementChild) {
+            shadowRoot.firstElementChild.setAttribute("data-theme", theme || "dark");
+            shadowRoot.firstElementChild.classList.add(theme || "dark");
+            shadowRoot.firstElementChild.classList.remove(theme === "dark" ? "light" : "dark");
+          }
+
           // 1. Sync the DevTools select element -> next-themes
           const selects = shadowRoot.querySelectorAll("select");
           let themeSelect: HTMLSelectElement | null = null;
