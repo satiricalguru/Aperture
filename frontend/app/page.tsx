@@ -126,9 +126,17 @@ export default function Home() {
 
         // 2. Sync next-themes -> DevTools select element
         if (themeSelect) {
-          const matchingOpt = Array.from((themeSelect as HTMLSelectElement).options).find((o) => o.value.toLowerCase() === theme);
-          if (matchingOpt && (themeSelect as HTMLSelectElement).value !== matchingOpt.value) {
-            (themeSelect as HTMLSelectElement).value = matchingOpt.value;
+          const selectEl = themeSelect as HTMLSelectElement;
+          const matchingOpt = Array.from(selectEl.options).find((o) => o.value.toLowerCase() === theme);
+          if (matchingOpt && selectEl.value !== matchingOpt.value) {
+            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value")?.set;
+            if (nativeInputValueSetter) {
+              nativeInputValueSetter.call(selectEl, matchingOpt.value);
+              selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+            } else {
+              selectEl.value = matchingOpt.value;
+              selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+            }
           }
         }
 
