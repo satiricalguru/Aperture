@@ -101,7 +101,7 @@ export default function Home() {
     document.documentElement.classList.remove(t === "dark" ? "light" : "dark");
   };
 
-  // Sync theme on mount and observe Next.js DevTools theme selection
+  // Sync theme on mount and configure Next.js DevTools portal
   useEffect(() => {
     document.documentElement.classList.add(theme);
     document.documentElement.classList.remove(theme === "dark" ? "light" : "dark");
@@ -111,34 +111,7 @@ export default function Home() {
 
     const syncWithPortal = (portal: Element) => {
       const updateFromPortal = () => {
-        let devTheme: "dark" | "light" = "dark";
-        
-        // 1. Try class list on portal
-        if (portal.classList.contains("light")) {
-          devTheme = "light";
-        } else if (portal.classList.contains("dark")) {
-          devTheme = "dark";
-        } else {
-          // 2. Fallback: inspect computed background color of preferences panel inside shadow DOM
-          const shadowRoot = portal.shadowRoot;
-          if (shadowRoot) {
-            const panel = shadowRoot.querySelector("dialog, [role='dialog'], div");
-            if (panel) {
-              const bgColor = window.getComputedStyle(panel).backgroundColor;
-              const match = bgColor.match(/rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
-              if (match) {
-                const r = parseInt(match[1], 10);
-                if (r > 180) {
-                  devTheme = "light";
-                }
-              }
-            }
-          }
-        }
-        
-        applyTheme(devTheme);
-
-        // 3. Inject custom "Connect Models" menu item inside Next.js DevTools portal shadow DOM
+        // Inject custom "Connect Models" menu item inside Next.js DevTools portal shadow DOM
         const shadowRoot = portal.shadowRoot;
         if (shadowRoot) {
           const preferencesRow = shadowRoot.querySelector("[data-preferences]");
