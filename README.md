@@ -31,9 +31,15 @@
 
 ## 📸 Screenshots
 
-*Screenshots showcasing the monochrome darkroom UI, contact sheets, and model configurations will go here.*
+<div align="center">
+  <h3>Darkroom Mode (Dark)</h3>
+  <img src="docs/screenshots/darkroom.png" alt="Aperture Darkroom Mode" width="100%" />
 
-<!-- Add screenshots here: <img src="path/to/screenshot.png" width="100%" /> -->
+  <br /><br />
+
+  <h3>Lightroom Mode (Light)</h3>
+  <img src="docs/screenshots/lightroom.png" alt="Aperture Lightroom Mode" width="100%" />
+</div>
 
 ---
 
