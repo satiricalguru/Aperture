@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import Composer from "../components/Composer";
 import ContactSheet from "../components/ContactSheet";
@@ -22,7 +22,7 @@ export default function Home() {
   const [activeGen, setActiveGen] = useState<Generation | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [openaiKey, setOpenaiKey] = useState<string>(() => {
     if (typeof window !== "undefined") {
@@ -86,10 +86,7 @@ export default function Home() {
     setIsSettingsOpen(false);
   };
 
-  // Sync mounted state and Next.js DevTools
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Sync Next.js DevTools
 
   useEffect(() => {
     if (!mounted) return;
