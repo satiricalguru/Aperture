@@ -88,6 +88,8 @@ export default function Home() {
 
   // Sync Next.js DevTools
 
+  const isSyncingRef = React.useRef(false);
+
   useEffect(() => {
     if (!mounted) return;
 
@@ -110,6 +112,7 @@ export default function Home() {
             if (!sel.hasAttribute("data-theme-listener")) {
               sel.setAttribute("data-theme-listener", "true");
               const handleSelectChange = () => {
+                if (isSyncingRef.current) return;
                 const val = sel.value.toLowerCase();
                 if (val === "dark" || val === "light" || val === "system") {
                   setTheme(val);
@@ -126,6 +129,7 @@ export default function Home() {
           const selectEl = themeSelect as HTMLSelectElement;
           const matchingOpt = Array.from(selectEl.options).find((o) => o.value.toLowerCase() === theme);
           if (matchingOpt && selectEl.value !== matchingOpt.value) {
+            isSyncingRef.current = true;
             const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value")?.set;
             if (nativeInputValueSetter) {
               nativeInputValueSetter.call(selectEl, matchingOpt.value);
@@ -134,6 +138,7 @@ export default function Home() {
               selectEl.value = matchingOpt.value;
               selectEl.dispatchEvent(new Event("change", { bubbles: true }));
             }
+            isSyncingRef.current = false;
           }
         }
 
