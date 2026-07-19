@@ -20,17 +20,8 @@ export default function Home() {
   const [newGenerationIds, setNewGenerationIds] = useState<Set<string>>(new Set());
   const [activeGen, setActiveGen] = useState<Generation | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("aperture-theme") as "dark" | "light" | null;
-      if (savedTheme === "dark" || savedTheme === "light") {
-        return savedTheme;
-      }
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    }
-    return "dark";
-  });
-
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [mounted, setMounted] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [openaiKey, setOpenaiKey] = useState<string>(() => {
     if (typeof window !== "undefined") {
@@ -99,12 +90,20 @@ export default function Home() {
     localStorage.setItem("aperture-theme", t);
     document.documentElement.classList.add(t);
     document.documentElement.classList.remove(t === "dark" ? "light" : "dark");
+    document.documentElement.setAttribute("data-theme", t);
   };
 
-  // Sync theme on mount and configure Next.js DevTools portal
+  // Sync theme on mount and load user preference
   useEffect(() => {
-    document.documentElement.classList.add(theme);
-    document.documentElement.classList.remove(theme === "dark" ? "light" : "dark");
+    setMounted(true);
+    const savedTheme = localStorage.getItem("aperture-theme") as "dark" | "light" | null;
+    let initialTheme: "dark" | "light" = "dark";
+    if (savedTheme === "dark" || savedTheme === "light") {
+      initialTheme = savedTheme;
+    } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+      initialTheme = "light";
+    }
+    applyTheme(initialTheme);
 
     let portalObserver: MutationObserver | null = null;
     let bodyObserver: MutationObserver | null = null;
@@ -308,7 +307,7 @@ export default function Home() {
               aria-label="Toggle Theme"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-              <span>{theme === "dark" ? "DARKROOM" : "LIGHTROOM"} MODE</span>
+              <span suppressHydrationWarning>{theme === "dark" ? "DARKROOM" : "LIGHTROOM"} MODE</span>
             </button>
             <button
               onClick={() => setIsSettingsOpen(true)}
